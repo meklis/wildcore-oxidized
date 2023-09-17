@@ -56,3 +56,7 @@ COPY extra/auto-reload-config.runit /etc/service/auto-reload-config/run
 COPY extra/update-ca-certificates.runit /etc/service/update-ca-certificates/run
 
 EXPOSE 8888/tcp
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+ENTRYPOINT /docker-entrypoint.sh
+
