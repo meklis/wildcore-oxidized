@@ -3,7 +3,7 @@ FROM docker.io/phusion/baseimage:jammy-1.0.1
 
 # set up dependencies for the build process
 RUN apt-get -yq update \
-    && apt-get -yq --no-install-recommends install ruby3.0 ruby3.0-dev libssl3 bzip2 libssl-dev pkg-config make cmake libssh2-1 libssh2-1-dev git git-email libmailtools-perl g++ libffi-dev ruby-bundler libicu70 libicu-dev libsqlite3-0 libsqlite3-dev libmysqlclient21 libmysqlclient-dev libpq5 libpq-dev zlib1g-dev msmtp \
+    && apt-get -yq --no-install-recommends install gettext-base ruby3.0 ruby3.0-dev libssl3 bzip2 libssl-dev pkg-config make cmake libssh2-1 libssh2-1-dev git git-email libmailtools-perl g++ libffi-dev ruby-bundler libicu70 libicu-dev libsqlite3-0 libsqlite3-dev libmysqlclient21 libmysqlclient-dev libpq5 libpq-dev zlib1g-dev msmtp \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

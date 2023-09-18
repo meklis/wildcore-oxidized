@@ -1,4 +1,5 @@
 #!/bin/bash
+envsubst '$OXIDIZED_THREADS $OXIDIZED_INTERVAL' < /home/oxidized/.config/oxidized/config.example > /home/oxidized/.config/oxidized/config
 echo "Sleep 30 seconds before starting..."
 sleep 30
 while true
