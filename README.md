@@ -38,6 +38,7 @@ Check out the [Oxidized TREX 2014 presentation](http://youtu.be/kBQ_CTUuqeU?t=3h
     * [FreeBSD](#freebsd)
     * [Build from Git](#build-from-git)
     * [Docker](#running-with-docker)
+    * [Podman-Compose](#running-with-podman-compose)
     * [Installing Ruby 2.3 using RVM](#installing-ruby-23-using-rvm)
 3. [Initial Configuration](#configuration)
 4. [Configuration](docs/Configuration.md)
@@ -67,7 +68,8 @@ Check out the [Oxidized TREX 2014 presentation](http://youtu.be/kBQ_CTUuqeU?t=3h
       * [Hook: ciscosparkdiff](docs/Hooks.md#hook-type-ciscosparkdiff)
 5. [Creating and Extending Models](docs/Creating-Models.md)
 6. [Help](#help)
-7. [Ruby API](docs/Ruby-API.md#ruby-api)
+7. [Help Needed](#help-needed)
+8. [Ruby API](docs/Ruby-API.md#ruby-api)
     * [Input](docs/Ruby-API.md#input)
     * [Output](docs/Ruby-API.md#output)
     * [Source](docs/Ruby-API.md#source)
@@ -99,23 +101,7 @@ gem install oxidized-script oxidized-web # If you don't install oxidized-web, en
 
 ### CentOS, Oracle Linux, Red Hat Linux
 
-On CentOS 6 and 7 / RHEL 6 and 7, begin by installing Ruby 2.3 or greater. This can be accomplished in one of several ways:
-
-Install Ruby 2.3 from [SCL](https://www.softwarecollections.org/en/scls/rhscl/rh-ruby23/):
-
-```shell
-yum install centos-release-scl
-yum install rh-ruby30 rh-ruby30-ruby-devel
-scl enable rh-ruby30 bash
-```
-
-The following additional packages will be required to build the dependencies:
-
-```shell
-yum install make cmake which sqlite-devel openssl-devel libssh2-devel ruby gcc ruby-devel libicu-devel gcc-c++
-```
-
-Alternatively, install Ruby 2.6 via RVM by following the instructions:
+On CentOS 6 and 7 / RHEL 6 and 7, begin by installing Ruby 3.1 via RVM by following the instructions:
 
 Make sure you dont have any leftover ruby:
 ```yum erase ruby```
@@ -127,8 +113,8 @@ sudo gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A17031138
 curl -sSL https://get.rvm.io | bash -s stable
 source /etc/profile.d/rvm.sh
 rvm requirements run
-rvm install 3.0
-rvm use 3.0
+rvm install 3.1
+rvm use 3.1
 ```
 
 Install oxidized requirements:
@@ -198,7 +184,7 @@ Run the container for the first time to initialize the config:
 _Note: this step in only required for creating the Oxidized configuration file and can be skipped if you already have one._
 
 ```shell
-docker run --rm -v /etc/oxidized:/home/oxidized/.config/oxidized -p 8888:8888/tcp -t oxidized/oxidized:latest oxidized
+docker run --rm -v /etc/oxidized:/home/oxidized/.config/oxidized -p 8888:8888/tcp --user oxidized -t oxidized/oxidized:latest oxidized
 ```
 
 If the RESTful API and Web Interface are enabled, on the docker host running the container
@@ -254,6 +240,10 @@ If you need to use an internal CA (e.g. to connect to an private github instance
 ```shell
 docker run -v /etc/oxidized:/home/oxidized/.config/oxidized -v /path/to/MY-CA.crt:/usr/local/share/ca-certificates/MY-CA.crt -p 8888:8888/tcp -e UPDATE_CA_CERTIFICATES=true -t oxidized/oxidized:latest
 ```
+
+### Running with podman-compose
+Under [examples/podman-compose](examples/podman-compose), you will find a complete
+example of how to integrate the container into a docker-compose.yml file.
 
 ### Installing Ruby 2.3 using RVM
 
@@ -391,38 +381,14 @@ If you need help with Oxidized then we have a few methods you can use to get in 
 
 ## Help Needed
 
-As things stand right now, `oxidized` is maintained by a single person. A great
-many [contributors](https://github.com/ytti/oxidized/graphs/contributors) have
-helped further the software, however contributions are not the same as ongoing
-owner- and maintainer-ship. It appears that many companies use the software to
-manage their network infrastructure, this is great news! But without additional
-help to maintain the software and put out releases, the future of oxidized
-might be less bright. The current pace of development and the much needed
-refactoring simply are not sustainable if they are to be driven by a single
-person.
+As things stand right now, `oxidized` is maintained by very few people.
+We would appreciate more individuals and companies getting involved in Oxidized.
 
-## Maintainers
+Beyond software development, documentation or maintenance of Oxidized, you could
+become a model maintainer, which can be done with little burden and would be a
+big help to the community.
 
-If you would like to be a maintainer for Oxidized then please read through the below and see if it's something you would like to help with. It's not a requirement that you can tick all the boxes below but it helps :)
-
-* Triage on issues, review pull requests and help answer any questions from users.
-* Above average knowledge of the Ruby programming language.
-* Professional experience with both oxidized and some other config backup tool (like rancid).
-* Ability to keep a cool head, and enjoy interaction with end users! :)
-* A desire and passion to help drive `oxidized` towards its `1.x.x` stage of life
-  * Help refactor the code
-  * Rework the core infrastructure
-* Permission from your employer to contribute to open source projects
-
-## YES, I WANT TO HELP
-
-Awesome! Simply send an e-mail to Saku Ytti at <saku@ytti.fi>.
-
-## Further reading
-
-Brian Anderson (from Rust fame) wrote an [excellent
-post](http://brson.github.io/2017/04/05/minimally-nice-maintainer) on what it
-means to be a maintainer.
+Interested? Have a look at [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License and Copyright
 

@@ -59,7 +59,7 @@ module Oxidized
 
     def run_input(input)
       rescue_fail = {}
-      [input.class::RescueFail, input.class.superclass::RescueFail].each do |hash|
+      [input.class::RESCUE_FAIL, input.class.superclass::RESCUE_FAIL].each do |hash|
         hash.each do |level, errors|
           errors.each do |err|
             rescue_fail[err] = level
@@ -79,20 +79,20 @@ module Oxidized
         @err_type = err.class.to_s
         @err_reason = err.message.to_s
         false
-      rescue StandardError => err
+      rescue StandardError => e
         crashdir  = Oxidized.config.crash.directory
         crashfile = Oxidized.config.crash.hostnames? ? name : ip.to_s
         FileUtils.mkdir_p(crashdir) unless File.directory?(crashdir)
 
         File.open File.join(crashdir, crashfile), 'w' do |fh|
           fh.puts Time.now.utc
-          fh.puts err.message + ' [' + err.class.to_s + ']'
+          fh.puts e.message + ' [' + e.class.to_s + ']'
           fh.puts '-' * 50
-          fh.puts err.backtrace
+          fh.puts e.backtrace
         end
-        Oxidized.logger.error '%s raised %s with msg "%s", %s saved' % [ip, err.class, err.message, crashfile]
-        @err_type = err.class.to_s
-        @err_reason = err.message.to_s
+        Oxidized.logger.error '%s raised %s with msg "%s", %s saved' % [ip, e.class, e.message, crashfile]
+        @err_type = e.class.to_s
+        @err_reason = e.message.to_s
         false
       end
     end
@@ -198,33 +198,43 @@ module Oxidized
     end
 
     def resolve_key(key, opt, global = nil)
-      # resolve key, first get global, then get group then get node config
+      # resolve key: the priority is as follows: node -> group specific model -> group -> model -> global passed -> global
+      # where node has the highest priority (= if defined, overwrites other values)
       key_sym = key.to_sym
       key_str = key.to_s
-      value   = global
-      Oxidized.logger.debug "node.rb: resolving node key '#{key}', with passed global value of '#{value}' and node value '#{opt[key_sym]}'"
+      model_name = @model.class.name.to_s.downcase
+      Oxidized.logger.debug "node.rb: resolving node key '#{key}', with passed global value of '#{global}' and node value '#{opt[key_sym]}'"
 
-      # global
-      if (not value) && Oxidized.config.has_key?(key_str)
+      # Node
+      if opt[key_sym]
+        value = opt[key_sym]
+        Oxidized.logger.debug "node.rb: setting node key '#{key}' to value '#{value}' from node"
+
+      # Group specific model
+      elsif Oxidized.config.groups.has_key?(@group) && Oxidized.config.groups[@group].models.has_key?(model_name) && Oxidized.config.groups[@group].models[model_name].has_key?(key_str)
+        value = Oxidized.config.groups[@group].models[model_name][key_str]
+        Oxidized.logger.debug "node.rb: setting node key '#{key}' to value '#{value}' from model in group"
+
+      # Group
+      elsif Oxidized.config.groups.has_key?(@group) && Oxidized.config.groups[@group].has_key?(key_str)
+        value = Oxidized.config.groups[@group][key_str]
+        Oxidized.logger.debug "node.rb: setting node key '#{key}' to value '#{value}' from group"
+
+      # Model
+      elsif Oxidized.config.models.has_key?(model_name) && Oxidized.config.models[model_name].has_key?(key_str)
+        value = Oxidized.config.models[model_name][key_str]
+        Oxidized.logger.debug "node.rb: setting node key '#{key}' to value '#{value}' from model"
+
+      # Global passed
+      elsif global
+        value = global
+        Oxidized.logger.debug "node.rb: setting node key '#{key}' to value '#{value}' from passed global value"
+
+      # Global
+      elsif Oxidized.config.has_key?(key_str)
         value = Oxidized.config[key_str]
         Oxidized.logger.debug "node.rb: setting node key '#{key}' to value '#{value}' from global"
       end
-
-      # group
-      if Oxidized.config.groups.has_key?(@group) && Oxidized.config.groups[@group].has_key?(key_str)
-        value = Oxidized.config.groups[@group][key_str]
-        Oxidized.logger.debug "node.rb: setting node key '#{key}' to value '#{value}' from group"
-      end
-
-      # model
-      if Oxidized.config.models.has_key?(@model.class.name.to_s.downcase) && Oxidized.config.models[@model.class.name.to_s.downcase].has_key?(key_str)
-        value = Oxidized.config.models[@model.class.name.to_s.downcase][key_str]
-        Oxidized.logger.debug "node.rb: setting node key '#{key}' to value '#{value}' from model"
-      end
-
-      # node
-      value = opt[key_sym] || value
-      Oxidized.logger.debug "node.rb: returning node key '#{key}' with value '#{value}'"
       value
     end
 
