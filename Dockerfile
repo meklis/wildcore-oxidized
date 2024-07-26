@@ -34,6 +34,7 @@ WORKDIR /tmp/oxidized
 # docker automated build gets shallow copy, but non-shallow copy cannot be unshallowed
 RUN git fetch --unshallow || true
 
+RUN gem install psych -v 3.3.2
 # Ensure rugged is built with ssh support
 RUN CMAKE_FLAGS='-DUSE_SSH=ON' rake install
 
