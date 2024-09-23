@@ -28,7 +28,7 @@ COPY extra/update-ca-certificates.runit /etc/service/update-ca-certificates/run
 # set up dependencies for the build process
 RUN apt-get -yq update \
     && apt-get -yq upgrade \
-    && apt-get -yq --no-install-recommends install ruby \
+    && apt-get -yq --no-install-recommends install ruby gettext-base  \
     # Build process of oxidized from git (beloww)
     git \
     # Allow git send-email from docker image
