@@ -78,3 +78,7 @@ WORKDIR /
 RUN rm -rf /tmp/oxidized
 
 EXPOSE 8888/tcp
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+ENTRYPOINT /docker-entrypoint.sh
+
