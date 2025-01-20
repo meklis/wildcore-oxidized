@@ -1,4 +1,51 @@
-# Single-stage build of an oxidized container from phusion/baseimage-docker
+###################
+# Stage 1: Prebuild to save space in the final image.
+
+FROM docker.io/phusion/baseimage:noble-1.0.0 AS prebuilder
+
+# install necessary packages for building gems
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    ruby-dev \
+    # Needed to build Net::SCP from https://github.com/robertcheramy/net-scp.git
+    # Can be removed after issue
+    # https://github.com/robertcheramy/net-scp/issues/1 is fixed
+    rubocop \
+    && rm -rf /var/lib/apt/lists/*
+
+# create bundle directory
+RUN mkdir -p /usr/local/bundle
+ENV GEM_HOME=/usr/local/bundle
+
+###################
+# Install the x25519 gem
+RUN gem install x25519 --no-document
+
+
+###################
+# build net-scp from https://github.com/robertcheramy/net-scp for APC devices
+WORKDIR /tmp/net-scp/
+RUN git clone -c advice.detachedHead=false --branch 4.0.3.fork --single-branch https://github.com/robertcheramy/net-scp.git /tmp/net-scp
+RUN rake build
+
+###################
+# build oxidized
+COPY . /tmp/oxidized/
+WORKDIR /tmp/oxidized
+
+# docker automated build gets shallow copy, but non-shallow copy cannot be unshallowed
+RUN git fetch --unshallow || true
+
+# Remove any older gems of oxidized if they exist
+RUN rm pkg/* || true
+
+# Ensure rugged is built with ssh support
+RUN rake build
+
+
+###################
+# Stage2: build an oxidized container from phusion/baseimage-docker and install x25519 from stage1
 FROM docker.io/phusion/baseimage:noble-1.0.0
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -40,7 +87,7 @@ RUN apt-get -yq update \
     # Use ubuntu gems where possible
     # Gems needed by oxidized
     ruby-rugged ruby-slop ruby-psych \
-    ruby-net-telnet ruby-net-ssh ruby-net-ftp ruby-net-scp ruby-ed25519 \
+    ruby-net-telnet ruby-net-ssh ruby-net-ftp ruby-ed25519 \
     # Gem dependencies for inputs
     ruby-net-http-persistent ruby-mechanize \
     # Gem dependencies for sources
@@ -53,6 +100,17 @@ RUN apt-get -yq update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# copy the compiled gem from the builder stage
+COPY --from=prebuilder /usr/local/bundle /usr/local/bundle
+
+# Set environment variables for bundler
+ENV GEM_HOME="/usr/local/bundle"
+ENV PATH="$GEM_HOME/bin:$PATH"
+
+# Install previously built net-scp
+COPY --from=prebuilder /tmp/net-scp/pkg/net-scp-4.0.3.fork.gem /tmp/
+RUN gem install /tmp/net-scp-4.0.3.fork.gem
+
 # gems not available in ubuntu noble
 RUN gem install --no-document \
     # dependencies for hooks
@@ -60,17 +118,13 @@ RUN gem install --no-document \
     # dependencies for specific inputs
     net-tftp
 
-# build and install oxidized
-COPY . /tmp/oxidized/
-WORKDIR /tmp/oxidized
+# install oxidized from prebuilder
+# The Dockerfile ist version-independent, so use oxidized-*.gem to cach the gem
+RUN mkdir -p /tmp/oxidized
+COPY --from=prebuilder /tmp/oxidized/pkg/oxidized-*.gem /tmp/oxidized/
+RUN gem install /tmp/oxidized/oxidized-*.gem
 
-# docker automated build gets shallow copy, but non-shallow copy cannot be unshallowed
-RUN git fetch --unshallow || true
-
-# Ensure rugged is built with ssh support
-RUN CMAKE_FLAGS='-DUSE_SSH=ON' rake install
-
-# web interface
+# install oxidized-web
 RUN gem install oxidized-web --no-document
 
 # clean up

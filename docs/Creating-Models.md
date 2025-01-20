@@ -54,6 +54,52 @@ The API documentation contains a list of [methods](https://github.com/ytti/oxidi
 
 A more fleshed out example can be found in the `IOS` and `JunOS` models.
 
+### Common task: mechanism for handling 'enable' mode
+The following code snippet demonstrates how to handle sending the 'enable'
+command and an enable password.
+
+This example is taken from the `IOS` model. It covers scenarios where users
+need to enable privileged mode, either without providing a password (by setting
+`enable: true` in the configuration) or with a password.
+
+```ruby
+  cfg :telnet, :ssh do
+    post_login do
+      if vars(:enable) == true
+        cmd "enable"
+      elsif vars(:enable)
+        cmd "enable", /^[pP]assword:/
+        cmd vars(:enable)
+      end
+    end
+  end
+```
+Note: remove `:telnet, ` if your device does not support telnet.
+
+### Common Task: remove ANSI escape codes
+> :warning: This common task is experimental.
+> If it does not work for you, please open an issue so that we can adapt the
+> code snippet.
+
+Some devices produce ANSI escape codes to enhance the appearance of output.
+However, this can make prompt matching difficult and some of these ANSI escape
+codes might end up in the resulting configuration.
+
+You can remove most [ANSI escape codes](https://en.wikipedia.org/wiki/ANSI_escape_code#Control_Sequence_Introducer_commands) using the following Ruby
+code in your model:
+```
+  # Remove ANSI escape codes
+  expect /\e\[[0-?]*[ -\/]*[@-~]\r?/ do |data, re|
+    data.gsub re, ''
+  end
+```
+Explanation of the Regular Expression:
+- `\e\[`   : Control Sequence Introducer (CSI), which starts with "ESC [".
+- `[0-?]*` : "Parameter" bytes (range 0x30–0x3F, corresponding to ASCII `0–9:;<=>?`).
+- `[ -\/]*`: "Intermediate" bytes (range 0x20–0x2F, corresponding to ASCII ` !"#$%&'()*+,-./`).
+- `[@-~]`  : The "final" byte (range 0x40–0x7E, corresponding to ASCII ``@A–Z[\]^_`a–z{|}~).[``).
+- `\r?`    : Some ESC codes include a carriage return, which we do not want in the resulting config.
+
 ## Extending an existing model with a new command
 
 The example below can be used to extend the `JunOS` model to collect the output of `show interfaces diagnostics optics` and append the output to the configuration file as a comment. This command retrieves DOM information on pluggable optics present in a `JunOS`-powered chassis.
@@ -86,98 +132,16 @@ Intuitively, it is also possible to:
 * Create a completely new model, with a new name, for a new operating system type.
 * Testing/validation of an updated model from the [Oxidized GitHub repo models](https://github.com/ytti/oxidized/tree/master/lib/oxidized/model) by placing an updated model in the proper location without disrupting the gem-supplied model files.
 
-## Create unit tests for the model
-> :warning model unit tests are still work in progress and need some polishing.
-
-If you want the model to be integrated into oxidized, you can
-[submit a pull request on github](https://github.com/ytti/oxidized/pulls).
+## Create Unit Tests for the Model
+If you want the model to be integrated into Oxidized, you can
+[submit a pull request on GitHub](https://github.com/ytti/oxidized/pulls).
 This is a greatly appreciated submission, as there are probably other users
 using the same network device as you are.
 
-A good practice for submissions is to provide a unit test for your model. This
-reduces the risk that further developments don't break it, and facilitates
-debugging issues without having access to a physical network  device for the
-model. Writing a model unit test for SSH is described in the next lines. Most
-of the work is writing a YAML file with the commands and their output, the ruby
-code itself is copy & paste with a few modifications. If you encounter
-problems, open an issue or ask for help within the pull request.
-
-You can have a look at the [Garderos unit test](/spec/model/garderos_spec.rb) for an example. The model unit test
-consists of (at least) two files:
-- a yaml file under `examples/model/`, containing the data used to simulate the network device.
-  - Please name your file `<model>_<hardware type>_<software_version>.yaml`, for example in the garderos unit test: [garderos_R7709_003_006_068.yaml](/examples/model/garderos_R7709_003_006_068.yaml).
-  - You can create multiple files in order to support multiple devices or software versions.
-  - You may append a comment after the software version to differentiate between two tested features (something like `garderos_R7709_003_006_068_with_ipsec.yaml`).
-- a ruby script containing the tests under `spec/model/`.
-  - It is named `<model>_spec.rb`, for the garderos model: [garderos_spec.rb](/spec/model/garderos_spec.rb).
-  - The script described below is a minimal example; you can add as many tests as needed.
-
-### YAML description to simulate the network device.
-The yaml file has three sections:
-- init_prompt: describing the lines send by the device before we can send a command. It may include motd banners, and mus include the first prompt.
-- commands: the commands the model sends to the network device and the expected output. Do not forget the command needed to logout from the device.
-- oxidized_output: the expected output of oxidized, so that you can compare it to the output generated by the unit test.
-
-The outputs are multiline and use yaml block scalars (`|`), with the trailing \n removed (`-` after `|`). The outputs includes the echo of the given command and the next prompt. Some escape characters are interpreted, currently \n, \r, \x\<octal char number\>, \\\\
-
-Here is a shortened example of a YAML file:
-```yaml
----
-# Trailing white spaces are coded as \x20 because some editors automatically remove trailing white spaces
-init_prompt: |-
-  \e[4m\rLAB-R1234_Garderos#\e[m\x20
-commands:
-  show system version: |-
-    show system version
-    grs-gwuz-armel/003_005_068 (Garderos; 2021-04-30 16:19:35)
-    \e[4m\rLAB-R1234_Garderos#\e[m\x20
-# ...
-  exit: ""
-oxidized_output: |-
-  # grs-gwuz-armel/003_005_068 (Garderos; 2021-04-30 16:19:35)
-  #\x20
-# ...
-```
-
-### Model unit test
-When creating the unit test, it is handy to have a specific section for testing different
-prompts without testing the whole configuration. This is done by the first test in the following
-example. The second tests takes the defined yaml file, runs the model against it and
-compares the result against the yaml-section `oxidized_output`.
-
-```ruby
-require_relative 'model_helper'
-
-describe 'model/Garderos' do
-  # For each test, we initialize oxidized to some default values
-  # and create a node with the model we want to test
-  # replace 'garderos' with your model
-  before(:each) do
-    init_model_helper
-    @node = Oxidized::Node.new(name:  'example.com',
-                               input: 'ssh',
-                               model: 'garderos')
-  end
-
-  it 'matches different prompts' do
-    _('LAB-R1234_Garderos# ').must_match Garderos.prompt
-  end
-
-  # Name the test after the tesed HW and SW. Link to your yaml data
-  it 'runs on R7709 with OS 003_006_068' do
-    mockmodel = MockSsh.new('examples/model/garderos_R7709_003_006_068.yaml')
-    Net::SSH.stubs(:start).returns mockmodel
-
-    status, result = @node.run
-
-    _(status).must_equal :success
-    _(result.to_cfg).must_equal mockmodel.oxidized_output
-  end
-end
-```
-
-The unit tests use [minitest/spec](https://github.com/minitest/minitest?tab=readme-ov-file#specs-) and [mocha](https://github.com/freerange/mocha).
-If you need more expectations for you tests, have a look at the [minitest documentation for expectations](https://docs.seattlerb.org/minitest/Minitest/Expectations.html)
+A good (and optional) practice for submissions is to provide a
+[unit test for your model](/docs/ModelUnitTests.md). This reduces the risk that
+further developments could break it, and facilitates debugging issues without
+having access to a physical network device for the model.
 
 ## Advanced features
 

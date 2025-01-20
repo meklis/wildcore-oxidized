@@ -1,9 +1,12 @@
 require_relative '../spec_helper'
+require_relative 'atoms'
 require 'yaml'
 
 def init_model_helper
   Oxidized.asetus = Asetus.new
   # Set to true in your unit test if you want a lot of logs while debugging
+  # You will need to run Oxidized.setup_logger again inside your unit test
+  # after setting Oxidized.asetus.cfg.debug to true
   Oxidized.asetus.cfg.debug = false
   Oxidized.config.timeout = 5
   Oxidized.setup_logger
@@ -12,38 +15,71 @@ def init_model_helper
   Oxidized::Node.any_instance.stubs(:resolve_output)
 end
 
-# Simulate Net::SSH::Connection::Session
+# save the result of a node.run into @filename
+# it is already formated for copy & paste into the YAML simulation file
+# @result is formated as it is returned by "status, result = @node.run"
+def result2file(result, filename)
+  File.open(filename, 'w') do |file|
+    # chomp: true removes the trailing \n after each line
+    result.to_cfg.each_line(chomp: true) do |line|
+      # encode line and remove first and trailing double quote
+      line = line.dump[1..-2]
+      # Make sure trailing white spaces are coded with \0x20
+      line.gsub!(/ $/, '\x20')
+      # prepend white spaces for the yaml block scalar
+      line = '  ' + line
+      file.write "#{line}\n"
+    end
+  end
+end
+
+# Class to Simulate Net::SSH::Connection::Session
 class MockSsh
-  attr_reader :oxidized_output
+  def self.caller_model
+    File.basename(caller_locations[1].path).split('_').first
+  end
+
+  def self.get_node(model = nil)
+    model ||= caller_model
+    Oxidized::Node.new(name:  'example.com',
+                       input: 'ssh',
+                       model: model)
+  end
+
+  def self.get_result(test_context = nil, test_or_desc)
+    test = test_or_desc
+    test = ATOMS::TestOutput.new(caller_model, test_or_desc) if test_or_desc.is_a?(String)
+    @node = get_node(test.model)
+    mockmodel = MockSsh.new(test.simulation)
+    Net::SSH.stubs(:start).returns mockmodel
+    status, result = @node.run
+    test_context&._(status)&.must_equal :success
+    result
+  end
 
   # Takes a yaml file with the data used to simulate the model
-  def initialize(yaml_model)
+  def initialize(model)
     @commands = {}
-    model = YAML.load_file(yaml_model)
     model['commands'].each do |key, value|
       @commands[key + "\n"] = interpolate_yaml(value)
     end
 
     @init_prompt = interpolate_yaml(model['init_prompt'])
-    @oxidized_output = interpolate_yaml(model['oxidized_output'])
   end
 
-  # We have to interpolate ourselves as yaml block scalars do not interpolate anything
+  # We have to interpolate as yaml block scalars don't interpolate anything
   def interpolate_yaml(text)
-    # Replace \x<int> with its char
-    text.gsub!(/\\x(\h+)/) do
-      digit = Regexp.last_match(1)
-      digit.to_i(16).chr
-    end
-    text.gsub!('\n', "\n")
-    text.gsub!('\r', "\r")
-    text.gsub!('\e', "\e")
-    # Last, replace \\ with \. We use gsub instead of gsub! to return the final text
-    text.gsub('\\\\', '\\')
+    # we just add double quotes and undump the result
+    "\"#{text}\"".undump
   end
 
   def exec!(cmd)
     Oxidized.logger.send(:debug, "exec! called with cmd #{cmd}")
+
+    # exec commands are send without \n, the keys in @commands have a "\n"
+    # appended, so we search for cmd + "\n" in @commands
+    cmd += "\n"
+
     raise "#{cmd} not defined" unless @commands.has_key?(cmd)
 
     Oxidized.logger.send(:debug, "exec! returns #{@commands[cmd]}")

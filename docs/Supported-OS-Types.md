@@ -8,8 +8,8 @@
 |AddPack             |AddPack                       |[addpack](/lib/oxidized/model/addpack.rb)
 |Adtran              |Total Access (AOS)            |[adtran](/lib/oxidized/model/adtran.rb)
 |                    |ADVA                          |[adva](/lib/oxidized/model/adva.rb)              |                 |[ADVA](Model-Notes/ADVA.md)
-|Alcatel-Lucent      |AOS                           |[aos](/lib/oxidized/model/aos.rb)
-|                    |AOS7                          |[aos7](/lib/oxidized/model/aos7.rb)
+|Alcatel-Lucent      |AOS                           |[aos](/lib/oxidized/model/aos.rb)                |                 |AOS6 - vxworks-based
+|                    |AOS7                          |[aos7](/lib/oxidized/model/aos7.rb)              |                 |AOS7 and AOS8 - linux-based
 |                    |ISAM                          |[isam](/lib/oxidized/model/isam.rb)
 |                    |SR OS (Formerly TiMOS)        |[sros](/lib/oxidized/model/sros.rb)
 |                    |Wireless                      |[aosw](/lib/oxidized/model/aosw.rb)              |                 |Same model as Aruba Wireless
@@ -20,8 +20,9 @@
 |Arbor Networks      |ArbOS                         |[arbos](/lib/oxidized/model/arbos.rb)            |                 |[ArbOS](Model-Notes/ArbOS.md)
 |Arista              |EOS                           |[eos](/lib/oxidized/model/eos.rb)                |                 |[EOS](Model-Notes/EOS.md)
 |Arris               |C4CMTS                        |[c4cmts](/lib/oxidized/model/c4cmts.rb)
-|Aruba               |AOS-CX                        |[aoscx](/lib/oxidized/model/aoscx.rb)            |@robertcheramy
-|                    |AOSW                          |[Aaosw](/lib/oxidized/model/aosw.rb)
+|Aruba               |AOS-CX                        |[aoscx](/lib/oxidized/model/aoscx.rb)            |@robertcheramy   |[HPE Aruba](Model-Notes/HPEAruba.md)
+|                    |AOSW                          |[aosw](/lib/oxidized/model/aosw.rb)                                |[HPE Aruba](Model-Notes/HPEAruba.md)
+|                    |ArubaInstant                  |[arubainstant](/lib/oxidized/model/arubainstant.rb)|@robertcheramy |[HPE Aruba](Model-Notes/HPEAruba.md)
 |Asterfusion         |AsterNOS                      |[asternos](/lib/oxidized/model/asternos.rb)
 |AudioCodes          |AudioCodes                    |[audiocodes](/lib/oxidized/model/audiocodes.rb)
 |                    |MediaPack MP-1xx, Mediant1000 |[audiocodesmp](/lib/oxidized/model/audiocodesmp.rb)
@@ -70,6 +71,7 @@
 |DELL                |PowerConnect                  |[powerconnect](/lib/oxidized/model/powerconnect.rb)
 |                    |AOSW                          |[aosw](/lib/oxidized/model/aosw.rb)              |                 |Same model as Aruba Wireless
 |                    |DellX                         |[dellx](/lib/oxidized/model/dellx.rb)
+|                    |Dell EMC Networking OS6       |[os6](/lib/oxidized/model/os6.rb)              |                 |[Dell EMC Networking OS6](Model-Notes/OS6.md)
 |                    |Dell EMC Networking OS10      |[os10](/lib/oxidized/model/os10.rb)              |                 |[Dell EMC Networking OS10](Model-Notes/OS10.md)
 |D-Link              |D-Link                        |[dlink](/lib/oxidized/model/dlink.rb)
 |                    |D-Link cisco like CLI         |[dlinknextgen](/lib/oxidized/model/dlinknextgen.rb)
@@ -167,6 +169,7 @@
 |                    |Edgeos                        |[edgeos](/lib/oxidized/model/edgeos.rb)
 |                    |EdgeSwitch                    |[edgeswitch](/lib/oxidized/model/edgeswitch.rb)
 |                    |AirFiber                      |[airfiber](/lib/oxidized/model/airfiber.rb)
+|Uplink              |EP4440-DP                     |[EP4440](/lib/oxidized/model/uplinkolt.rb)             | |Might support all EP4440 series
 |VMWare              |NSX Edge (configuration)      |[nsxconfig](/lib/oxidized/model/nsxconfig.rb)
 |                    |NSX Edge (firewall rules)     |[nsxfirewall](/lib/oxidized/model/nsxfirewall.rb)
 |                    |NSX Distributed Firewall      |[nsxdfw](/lib/oxidized/model/nsxdfw.rb)
