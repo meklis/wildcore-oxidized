@@ -5,7 +5,7 @@ class RAISECOM < Oxidized::Model
   prompt /([\w.@-]+[#>]\s?)$/
 
   cfg :telnet do
-    username /(name|login):/
+    username /(name|ogin):/
     password /(word:)/
   end
 
