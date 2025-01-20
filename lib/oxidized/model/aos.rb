@@ -6,6 +6,11 @@ class AOS < Oxidized::Model
 
   comment  '! '
 
+  expect /More: <space> .*$/ do |data, re|
+    send ' '
+    data.sub re, ''
+  end
+
   cmd :all do |cfg|
     cfg.cut_both
   end
@@ -35,12 +40,17 @@ class AOS < Oxidized::Model
     cfg
   end
 
+  cmd 'show current-config' do |cfg|
+      cfg.cut_both
+  end
+
   cfg :telnet do
-    username /^login : /
-    password /^password : /
+    username /(login|name):/
+    password /ord:/
   end
 
   cfg :telnet, :ssh do
+    post_login "terminal datadump"
     pre_logout 'exit'
   end
 end

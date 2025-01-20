@@ -4,6 +4,11 @@ class RAISECOM < Oxidized::Model
   comment '! '
   prompt /([\w.@-]+[#>]\s?)$/
 
+  cfg :telnet do
+    username /(name|login):/
+    password /(word:)/
+  end
+
   cmd 'show version' do |cfg|
     cfg.gsub! /\s(System uptime is ).*/, ' \\1 <removed>'
     comment cfg
@@ -14,7 +19,7 @@ class RAISECOM < Oxidized::Model
     cfg
   end
 
-  cfg :ssh do
+  cfg :ssh, :telnet do
     post_login 'terminal page-break disable'
     pre_logout 'exit'
   end

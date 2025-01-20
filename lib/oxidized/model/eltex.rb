@@ -30,7 +30,7 @@ class Eltex < Oxidized::Model
 
   cfg :telnet do
     username /^(User Name):/
-    password /^Password:/
+    password /ord:/
   end
 
   cfg :telnet, :ssh do
