@@ -45,7 +45,7 @@ class AOS < Oxidized::Model
   end
 
   cfg :telnet do
-    username /(login|name):/
+    username /(login|ame):/
     password /ord:/
   end
 
