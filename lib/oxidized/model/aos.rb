@@ -11,6 +11,9 @@ class AOS < Oxidized::Model
     data.sub re, ''
   end
 
+  prompt /^([\w."\ ]+(\(.*?\))?[>#]\s?$)/
+
+
   cmd :all do |cfg|
     cfg.cut_both
   end
