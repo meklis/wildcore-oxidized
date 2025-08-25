@@ -4,11 +4,45 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## HEAD
+## [Unreleased]
+
+### Added
+- Allow setting timeout on per node basis. Closes #3612 (@ytti)
+
+### Changed
 
 ### Fixed
-- SSH raises error when closing closed connection. Fixes #3583 (@ytti)
+
+
+## [0.34.3 - 2025-08-05]
+This release fixes an issue preventing /node/show/<hostname> to work in oxidized-web.
+
+### Fixed
+- Guarantee that node vars is a dict (Issue ytti/oxidized-web#365) (@ytti)
+
+## [0.34.2 – 2025-08-01]
+This release mainly fixes a bug in input/scp that made ssh raise an error when
+closing a closed connection (Issue #3583).
+
+A fix for config vars (Issue #3536) changes the way oxidized stores its
+vars internally (symblos => strings). Libraries depending on oxidized internal
+structures may have problem with this. oxidized-web was fixed in Release 0.17.1.
+
+### Added
+- Absolute time limit for a fetch job (default: 300 seconds) (@robertcheramy)
+
+### Changed
+- slackdiff: Attempt to join the channel if Errors::NotInChannel is encountered (@varesa)
+
+### Fixed
+- SSH raises error when closing a closed connection. Fixes #3583 (@ytti)
 - Config vars will not fall back to less specific. Fixes #3536 (@ytti)
+- input/scp: make common errors produce a warning, not a crashfile (@robertcheramy)
+- input/scp: implement timeouts. Fixes #3590 (@robertcheramy, @ytti)
+- model/mtrlrfs: add missing prompt (@R3thos)
+- slackdiff: Respect the HTTP proxy configuration while uploading the file. Fixes #3534 (@varesa)
+- logging (syslog): do not write two timestamps (Fixed in semanticlogger) (@robertcheramy)
+
 
 ## [0.34.1 - 2025-07-18]
 This release contains small fixes and will include the new version of oxidized-web (0.17.0) in the docker container.
@@ -20,6 +54,7 @@ This release contains small fixes and will include the new version of oxidized-w
 - input/ssh: hide Net::SSH errors and only display fatal logs unless input.debug = true. Fixes: #3574 (@robertcheramy)
 - junos: fix unfrozen literal strings (@robertcheramy)
 - spec/model: fix unfrozen literal strings and set a default prompt (@robertcheramy)
+
 
 ## [0.34.0 - 2025-07-15]
 :warning: This release introduces a [new logging system](docs/Configuration.md#logging),

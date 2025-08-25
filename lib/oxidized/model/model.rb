@@ -4,6 +4,7 @@ require_relative 'outputs'
 module Oxidized
   class Model
     include SemanticLogger::Loggable
+
     using Refinements
 
     include Oxidized::Config::Vars
@@ -12,9 +13,9 @@ module Oxidized
       def inherited(klass)
         super
         if klass.superclass == Oxidized::Model
-          klass.instance_variable_set '@cmd',     (Hash.new { |h, k| h[k] = [] })
-          klass.instance_variable_set '@cfg',     (Hash.new { |h, k| h[k] = [] })
-          klass.instance_variable_set '@procs',   (Hash.new { |h, k| h[k] = [] })
+          klass.instance_variable_set('@cmd',     Hash.new { |h, k| h[k] = [] })
+          klass.instance_variable_set('@cfg',     Hash.new { |h, k| h[k] = [] })
+          klass.instance_variable_set('@procs',   Hash.new { |h, k| h[k] = [] })
           klass.instance_variable_set '@expect',  []
           klass.instance_variable_set '@comment', nil
           klass.instance_variable_set '@prompt',  nil
